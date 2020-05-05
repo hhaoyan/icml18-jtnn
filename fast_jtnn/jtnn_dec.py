@@ -37,8 +37,8 @@ class JTNNDecoder(nn.Module):
         self.U_o = nn.Linear(hidden_size, 1)
 
         # Loss Functions
-        self.pred_loss = nn.CrossEntropyLoss(size_average=False)
-        self.stop_loss = nn.BCEWithLogitsLoss(size_average=False)
+        self.pred_loss = nn.CrossEntropyLoss(reduction='sum')
+        self.stop_loss = nn.BCEWithLogitsLoss(reduction='sum')
 
     def aggregate(self, hiddens, contexts, x_tree_vecs, mode):
         if mode == 'word':
@@ -209,7 +209,7 @@ class JTNNDecoder(nn.Module):
 
         all_nodes = [root]
         h = {}
-        for step in xrange(MAX_DECODE_LEN):
+        for step in range(MAX_DECODE_LEN):
             node_x, fa_slot = stack[-1]
             cur_h_nei = [h[(node_y.idx, node_x.idx)] for node_y in node_x.neighbors]
             if len(cur_h_nei) > 0:

@@ -51,7 +51,7 @@ class MolTreeFolder(object):
 
     def __init__(self, data_folder, vocab, batch_size, num_workers=4, shuffle=True, assm=True, replicate=None):
         self.data_folder = data_folder
-        self.data_files = [fn for fn in os.listdir(data_folder)]
+        self.data_files = [fn for fn in os.listdir(data_folder) if fn.endswith('pkl')]
         self.batch_size = batch_size
         self.vocab = vocab
         self.num_workers = num_workers
@@ -61,10 +61,14 @@ class MolTreeFolder(object):
         if replicate is not None:  # expand is int
             self.data_files = self.data_files * replicate
 
+    @staticmethod
+    def _collate_fn(x):
+        return x[0]
+
     def __iter__(self):
         for fn in self.data_files:
             fn = os.path.join(self.data_folder, fn)
-            with open(fn) as f:
+            with open(fn, 'rb') as f:
                 data = pickle.load(f)
 
             if self.shuffle:
@@ -76,9 +80,10 @@ class MolTreeFolder(object):
 
             dataset = MolTreeDataset(batches, self.vocab, self.assm)
             dataloader = DataLoader(dataset, batch_size=1, shuffle=False, num_workers=self.num_workers,
-                                    collate_fn=lambda x: x[0])
+                                    collate_fn=self._collate_fn)
 
             for b in dataloader:
+                print(b)
                 yield b
 
             del data, batches, dataset, dataloader

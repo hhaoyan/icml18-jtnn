@@ -1,5 +1,14 @@
-from .chemutils import get_clique_mol, tree_decomp, get_mol, get_smiles, set_atommap, enum_assemble
-from .vocab import *
+import sys
+from multiprocessing.pool import Pool
+
+from tqdm import tqdm
+
+sys.path.append('..')
+
+import rdkit
+
+from fast_jtnn.chemutils import get_clique_mol, tree_decomp, get_mol, get_smiles, set_atommap, enum_assemble
+from fast_jtnn.vocab import *
 
 
 class MolTreeNode(object):
@@ -111,6 +120,16 @@ def dfs(node, fa_idx):
     return max_depth + 1
 
 
+def get_cset(inp):
+    smiles = inp.split()[0]
+    mol = MolTree(smiles)
+    cset_set = set()
+    for c in mol.nodes:
+        cset_set.add(c.smiles)
+
+    return cset_set
+
+
 if __name__ == "__main__":
     import sys
 
@@ -118,10 +137,9 @@ if __name__ == "__main__":
     lg.setLevel(rdkit.RDLogger.CRITICAL)
 
     cset = set()
-    for line in sys.stdin:
-        smiles = line.split()[0]
-        mol = MolTree(smiles)
-        for c in mol.nodes:
-            cset.add(c.smiles)
+    with Pool() as pool:
+        for cset_set in pool.imap_unordered(get_cset, tqdm(sys.stdin), chunksize=128):
+            for i in cset_set:
+                cset.add(i)
     for x in cset:
         print(x)

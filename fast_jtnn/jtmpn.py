@@ -16,7 +16,7 @@ MAX_NB = 15
 def onek_encoding_unk(x, allowable_set):
     if x not in allowable_set:
         x = allowable_set[-1]
-    return map(lambda s: x == s, allowable_set)
+    return list(map(lambda s: x == s, allowable_set))
 
 
 def atom_features(atom):
